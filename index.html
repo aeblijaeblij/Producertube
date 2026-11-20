@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="referrer" content="strict-origin-when-cross-origin">
+<meta name="theme-color" content="#0e0d12">
+<title>ProducerTube</title>
+<style>
+:root{--accent:#ff5c8a;--bg:#0e0d12;--card:#1a1820;--text:#eeeaf2;--muted:#8e889a}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font:16px/1.4 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+header{padding:22px 18px 6px;max-width:860px;margin:0 auto}
+h1{font-size:28px;letter-spacing:-.5px}
+h1 span{color:var(--accent)}
+.sub{color:var(--muted);font-size:14px;margin-top:2px}
+nav{position:sticky;top:0;z-index:5;background:var(--bg);padding:10px 14px;display:flex;gap:8px;overflow-x:auto;scrollbar-width:none;max-width:860px;margin:0 auto}
+nav::-webkit-scrollbar{display:none}
+nav button{flex:none;border:1px solid color-mix(in srgb,var(--muted) 35%,transparent);background:transparent;color:var(--text);padding:8px 14px;border-radius:999px;font:inherit;font-size:14px;cursor:pointer}
+nav button.on{background:var(--accent);border-color:var(--accent);color:#fff}
+main{max-width:860px;margin:0 auto;padding:4px 14px 40px}
+#player{display:none;margin:8px 0 18px}
+#player.show{display:block}
+.frame{position:relative;width:100%;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden}
+.frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.pbar{display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap}
+.pbar strong{flex:1;min-width:140px;font-size:17px}
+.mode{display:flex;background:var(--card);border-radius:10px;padding:3px}
+.mode button{border:0;background:transparent;color:var(--muted);font:inherit;font-size:13px;padding:6px 10px;border-radius:8px;cursor:pointer}
+.mode button.on{background:var(--accent);color:#fff}
+.close{border:0;background:var(--card);color:var(--text);width:34px;height:34px;border-radius:10px;font-size:18px;cursor:pointer}
+.hint{color:var(--muted);font-size:12px;margin-top:6px}
+.list{display:grid;gap:10px;grid-template-columns:repeat(auto-fill,minmax(250px,1fr))}
+.ch{display:flex;gap:12px;align-items:center;text-align:left;width:100%;border:0;background:var(--card);color:var(--text);padding:14px;border-radius:14px;font:inherit;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.ch.on{outline:2px solid var(--accent)}
+.av{flex:none;width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:#fff;background:var(--accent)}
+.ch b{display:block;font-size:15px}
+.ch small{display:block;color:var(--muted);font-size:13px;margin-top:2px}
+footer{color:var(--muted);font-size:12px;text-align:center;padding:10px 18px 30px}
+</style>
+</head>
+<body>
+<header><h1 id="t"></h1><div class="sub">Songs, not loops.</div></header>
+<nav id="tabs"></nav>
+<main>
+  <section id="player">
+    <div class="frame"><iframe id="yt" title="Video player" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+    <div class="pbar">
+      <strong id="now"></strong>
+      <div class="mode" id="mode">
+        <button data-m="UULF" class="on">Latest</button>
+        <button data-m="UULP">Popular</button>
+        <button data-m="UU">All</button>
+      </div>
+      <button class="close" id="close" aria-label="Close player">×</button>
+    </div>
+    <div class="hint">Tip: tap the list icon in the top-right of the player to pick a video from this channel.</div>
+  </section>
+  <div class="list" id="list"></div>
+</main>
+<footer>Curated channels only. No feed, no search, no Shorts.</footer>
+<script>
+const DATA = [{"tab": "OP-XY & Synths", "ch": [["teenage engineering", "UCJaEGe7IYRz4_f42DyeUU1w", "Official OP-XY guides and artist sessions"], ["Red Means Recording", "UChnxLLvzviaR5NeKOevB8iQ", "Full songs built on TE gear, from idea to finished track"], ["loopop", "UC-RA5BzE_BnZhf5iVdNF1hA", "Deep, clear walkthroughs of grooveboxes incl. OP-XY"], ["Mylar Melodies", "UCz0l5LJhNQkktxKWcGUtWxg", "Thoughtful synth and workflow videos"], ["Look Mum No Computer", "UCafxR2HWJRmMfSdyZXvZMTw", "DIY synths, drum machines and wild builds"]]}, {"tab": "Songwriting & Arrangement", "ch": [["Holistic Songwriting", "UCPAumaMAQ45xdvj6AkcA3ww", "Song structure, hooks and finishing songs"], ["Signals Music Studio", "UCRDDHLvQb8HjE2r7_ZuNtWA", "Chords, melody and theory, explained practically"], ["12tone", "UCTUtqcDkzw7bisadh6AOx5w", "Song analyses that show how real songs are built"], ["Rick Beato", "UCJquYOG5EL82sKTfH9aMA9Q", "What makes great songs great"], ["Andrew Huang", "UCdcemy56JtVTrsFIOoqvV8g", "Creativity, challenges and ideas to break routines"]]}, {"tab": "80s · Darkwave · Ambient", "ch": [["Espen Kraft", "UCa5swc5zZU-xdI8T2RzhL4Q", "80s synthpop and synthwave sounds and production"], ["Doctor Mix", "UCbzNcFN7cxA8HO18cTYyTfg", "Recreations of classic 80s tracks and sounds"], ["HAINBACH", "UCeovElJP0n0i8ADaPsRSd8g", "Experimental and ambient sound, tape and texture"], ["Venus Theory", "UCzsd4-oyHhNbAXfceOQ5HTw", "Atmospheric sound design and creative mindset"]]}, {"tab": "Recording & Mixing", "ch": [["Produce Like A Pro", "UCpyUGZeMUtOvt57UACw3H2g", "Recording and mixing bands, real studio practice"], ["Dan Worrall", "UCQnz5mUTDkGwKvIQ9uyqiXw", "The clearest mixing explanations on YouTube"], ["n-Track Studio", "UC3G-oThC6NCSFhhFI5Grdww", "Android DAW tutorials (multitrack recording)"], ["BandLab", "UCsO0m6BezJqB7dQCIazvTfQ", "Free Android DAW: recording in layers"]]}, {"tab": "Live Sessions", "ch": [["KEXP", "UC3I2GFN_F8WudD_2jUZbojA", "Live studio sessions, lots of indie and post-punk"], ["La Blogothèque", "UCFAKGci5lneha2x4XMbzYrQ", "Take Away Shows: intimate one-take performances"], ["Boiler Room", "UCGBpxWJr9FNOcFYA5GkKrMg", "DJ and live electronic sets"]]}];
+const TITLE = "ProducerTube";
+const t = document.getElementById('t');
+t.innerHTML = TITLE.replace(/Tube$/, '<span>Tube</span>');
+const tabs = document.getElementById('tabs'), list = document.getElementById('list');
+const player = document.getElementById('player'), yt = document.getElementById('yt'), now = document.getElementById('now');
+let tab = 0, cur = null, mode = 'UULF';
+const store = {get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}}};
+
+function src(id){
+  const list = mode + id.slice(2);
+  return 'https://www.youtube-nocookie.com/embed/videoseries?list=' + list + '&rel=0&playsinline=1&modestbranding=1&iv_load_policy=3';
+}
+function renderTabs(){
+  tabs.innerHTML = '';
+  DATA.forEach((g,i)=>{
+    const b = document.createElement('button');
+    b.textContent = g.tab; if(i===tab) b.className='on';
+    b.onclick = ()=>{tab=i; store.set(TITLE+':tab',i); renderTabs(); renderList();};
+    tabs.appendChild(b);
+  });
+}
+function renderList(){
+  list.innerHTML = '';
+  DATA[tab].ch.forEach(([name,id,desc])=>{
+    const b = document.createElement('button');
+    b.className = 'ch' + (cur===id?' on':'');
+    const ini = name.replace(/[^A-Za-zÀ-ÿ0-9 ]/g,'').split(' ').filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();
+    b.innerHTML = '<div class="av"></div><div><b></b><small></small></div>';
+    b.querySelector('.av').textContent = ini;
+    b.querySelector('b').textContent = name;
+    b.querySelector('small').textContent = desc;
+    b.onclick = ()=>play(name,id);
+    list.appendChild(b);
+  });
+}
+function play(name,id){
+  cur = id; now.textContent = name; yt.src = src(id);
+  player.classList.add('show'); renderList();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.getElementById('mode').onclick = e=>{
+  const m = e.target.dataset && e.target.dataset.m; if(!m) return;
+  mode = m;
+  [...e.currentTarget.children].forEach(b=>b.classList.toggle('on', b.dataset.m===m));
+  if(cur) yt.src = src(cur);
+};
+document.getElementById('close').onclick = ()=>{yt.src='about:blank'; player.classList.remove('show'); cur=null; renderList();};
+const saved = parseInt(store.get(TITLE+':tab'));
+if(!isNaN(saved) && saved < DATA.length) tab = saved;
+renderTabs(); renderList();
+</script>
+</body>
+</html>
